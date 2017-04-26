@@ -1,12 +1,16 @@
-FROM debian:jessie
-MAINTAINER Rafael Römhild <rafael@roemhild.de>
+FROM debian:jessie-slim
+MAINTAINER Fernando Ripoll <pipo02mix@gmail.com>
 
-ENV EJABBERD_BRANCH=17.03 \
+ENV EJABBERD_BRANCH=17.04 \
+    EJABBERD_HOME=/opt/ejabberd \
+    EJABBERD_SKIP_MODULES_UPDATE=true \
     EJABBERD_USER=ejabberd \
-    EJABBERD_HTTPS=true \
+    EJABBERD_HTTPS=false \
     EJABBERD_STARTTLS=true \
     EJABBERD_S2S_SSL=true \
-    EJABBERD_HOME=/opt/ejabberd \
+    EJABBERD_CONTRIB_MODULES=mod_cobrowser \
+    EJABBERD_ADMINS=admin \
+    EJABBERD_USERS=admin:password1234 \
     EJABBERD_DEBUG_MODE=false \
     HOME=$EJABBERD_HOME \
     PATH=$EJABBERD_HOME/bin:/usr/sbin:/usr/bin:/sbin:/bin \
@@ -47,7 +51,7 @@ RUN set -x \
         erlang-base erlang-snmp erlang-ssl erlang-ssh erlang-webtool \
         erlang-tools erlang-xmerl erlang-corba erlang-diameter erlang-eldap \
         erlang-eunit erlang-ic erlang-odbc erlang-os-mon \
-        erlang-parsetools erlang-percept erlang-typer \
+        erlang-parsetools erlang-percept erlang-typer erlang-inets \
         python-mysqldb \
         imagemagick \
     ' \
@@ -68,6 +72,7 @@ RUN set -x \
     && chmod +x ./autogen.sh \
     && ./autogen.sh \
     && ./configure --enable-user=$EJABBERD_USER \
+        --prefix=/ \
         --enable-all \
         --disable-tools \
         --disable-pam \
@@ -93,11 +98,38 @@ ADD ./run.sh /sbin/run
 
 # Add run scripts
 ADD ./scripts $EJABBERD_HOME/scripts
-ADD https://raw.githubusercontent.com/rankenstein/ejabberd-auth-mysql/master/auth_mysql.py $EJABBERD_HOME/scripts/lib/auth_mysql.py
-RUN chmod a+rx $EJABBERD_HOME/scripts/lib/auth_mysql.py
+
+# Copy auth module
+COPY extauth $EJABBERD_HOME/extauth
+
+# Copy init script run by k8s when it is started
+COPY init.sh $EJABBERD_HOME/
 
 # Add config templates
 ADD ./conf /opt/ejabberd/conf
+
+# Set ejabberd user as owner of the main folder
+RUN chown ejabberd:ejabberd -R $EJABBERD_HOME
+
+# Continue as user
+USER $EJABBERD_USER
+
+# Move mod cobrowser to the installation folder
+COPY ./mod_cobrowser $EJABBERD_HOME/mod_cobrowser
+RUN mkdir -p $EJABBERD_HOME/.ejabberd-modules/sources/mod_cobrowser
+
+# Run ejabberd to install mod cobrowser
+RUN run configure
+
+# Clean contrib modules for next run
+ENV EJABBERD_CONTRIB_MODULES=
+
+# Remove first start done file to be able to start normally when k8s starts the contianer
+USER root
+RUN rm $EJABBERD_HOME/first-start-done
+RUN rm ${EJABBERD_HOME}/conf/ejabberd.yml
+RUN rm -rf ${EJABBERD_HOME}/mod_cobrowser
+RUN chown ejabberd:ejabberd -R $EJABBERD_HOME
 
 # Continue as user
 USER $EJABBERD_USER
@@ -105,8 +137,5 @@ USER $EJABBERD_USER
 # Set workdir to ejabberd root
 WORKDIR $EJABBERD_HOME
 
-VOLUME ["$EJABBERD_HOME/database", "$EJABBERD_HOME/ssl", "$EJABBERD_HOME/backup", "$EJABBERD_HOME/upload"]
-EXPOSE 4560 5222 5269 5280 5443
+EXPOSE 4560 5222 5269 5280 5443 5225
 
-CMD ["start"]
-ENTRYPOINT ["run"]

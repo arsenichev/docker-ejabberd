@@ -61,6 +61,15 @@ listen:
     dhfile: "/opt/ejabberd/ssl/dh.pem"
     {%- endif %}
   -
+    port: 5225
+    module: ejabberd_service
+    access: all
+    shaper_rule: fast
+    ip: "{{ env.get('COMPONENT_SVC_SERVICE_HOST', "0.0.0.0") }}"
+    hosts:
+      "{{ env.get('EJABBERD_COMPONENT_DOMAIN', "internal.localhost") }}":
+        password: "{{ env.get('EJABBERD_COMPONENT_SECRET', "pass") }}"
+  -
     port: 5269
     module: ejabberd_s2s_in
   -
@@ -291,6 +300,7 @@ language: "en"
 
 modules:
   mod_adhoc: {}
+  ##mod_cobrowser: {}
   {%- if env['EJABBERD_MOD_ADMIN_EXTRA'] == "true" %}
   mod_admin_extra: {}
   {% endif %}
@@ -306,7 +316,8 @@ modules:
   mod_disco: {}
   ## mod_echo: {}
   mod_irc: {}
-  mod_http_bind: {}
+  mod_bosh:
+    max_inactivity: 75
   ## mod_http_fileserver:
   ##   docroot: "/var/www"
   ##   accesslog: "/var/log/ejabberd/access.log"
@@ -329,7 +340,10 @@ modules:
   ## mod_multicast: {}
   mod_offline:
     access_max_user_messages: max_user_offline_messages
-  mod_ping: {}
+  mod_ping:
+    send_pings: true
+    ping_interval: 10
+    timeout_action: none
   ## mod_pres_counter:
   ##   count: 5
   ##   interval: 60
@@ -402,36 +416,3 @@ host_config:
   "{{ xmpp_domain }}":
     domain_certfile: "/opt/ejabberd/ssl/{{ xmpp_domain }}.pem"
 {%- endfor %}
-
-{%- if env['EJABBERD_CONFIGURE_ODBC'] == "true" %}
-###   ====================
-###   ODBC DATABASE CONFIG
-sql_type: {{ env['EJABBERD_ODBC_TYPE'] }}
-sql_server: "{{ env['EJABBERD_ODBC_SERVER'] }}"
-sql_database: "{{ env['EJABBERD_ODBC_DATABASE'] }}"
-sql_username: "{{ env['EJABBERD_ODBC_USERNAME'] }}"
-sql_password: "{{ env['EJABBERD_ODBC_PASSWORD'] }}"
-
-default_db: sql
-{% endif %}
-
-{%- if env['EJABBERD_DEFAULT_DB'] is defined %}
-default_db: {{ env['EJABBERD_DEFAULT_DB'] }}
-{% endif %}
-
-###   =====================
-###   SESSION MANAGEMENT DB
-sm_db_type: {{ env['EJABBERD_SESSION_DB'] or "mnesia" }}
-
-{%- if env['EJABBERD_CONFIGURE_REDIS'] == "true" %}
-###   ====================
-###   REDIS DATABASE CONFIG
-redis_server: {{ env['EJABBERD_REDIS_SERVER'] or "localhost" }}
-redis_port: {{ env['EJABBERD_REDIS_PORT'] or 6379 }}
-{%- if env['EJABBERD_REDIS_PASSWORD'] is defined %}
-redis_password: {{ env['EJABBERD_REDIS_PASSWORD'] }}
-{% endif %}
-redis_db: {{ env['EJABBERD_REDIS_DB'] or 0}}
-redis_reconnect_timeout: {{ env['EJABBERD_REDIS_RECONNECT_TIMEOUT'] or 1 }}
-redis_connect_timeout: {{ env['EJABBERD_REDIS_CONNECT_TIMEOUT'] or 1 }}
-{% endif %}

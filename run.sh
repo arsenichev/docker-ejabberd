@@ -85,6 +85,15 @@ case "$@" in
         post_scripts
         wait $child
     ;;
+    configure)
+        pre_scripts
+        echo "Starting ejabberd for configuration..."
+        exec ${EJABBERDCTL} "live" &
+        ${EJABBERDCTL} "started"
+        cp -R $EJABBERD_HOME/mod_cobrowser $EJABBERD_HOME/.ejabberd-modules/sources/
+        echo "Configuring modules..."
+        post_scripts
+    ;;
     live)
         pre_scripts
         echo "Starting ejabberd in 'live' mode..."

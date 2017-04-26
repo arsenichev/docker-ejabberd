@@ -167,7 +167,7 @@ ERLANG_NODE={{ env['ERLANG_NODE'] or "ejabberd@localhost" }}
 #
 # Default: $HOME/.ejabberd-modules
 #
-#CONTRIB_MODULES_PATH=/opt/ejabberd-modules
+CONTRIB_MODULES_PATH=/opt/ejabberd/.ejabberd-modules
 
 #.
 #' EJABBERD_BYPASS_WARNINGS: Bypass LIVE warning
