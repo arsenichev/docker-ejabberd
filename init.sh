@@ -19,7 +19,7 @@ tail -F $EXTAUTH_LOG &
 #sed -i "s/__namespace__/$NAMESPACE/g;" $EJABBERD_HOME/extauth/extauth.ini
 #sed -i "s/__cluster_domain__/$CLUSTER_DOMAIN/g;" $EJABBERD_HOME/extauth/extauth.ini
 sed -i "s/__nginx_internal_ip__/$NGINX_INTERNAL_SERVICE_HOST/g;" $EJABBERD_HOME/extauth/extauth.ini
-#sed -i "s/##mod_cobrowser: {}/mod_cobrowser: {}/g;" $EJABBERD_HOME/conf/ejabberd.yml.tpl
+sed -i "s/##mod_cobrowser: {}/mod_cobrowser: {}/g;" $EJABBERD_HOME/conf/ejabberd.yml.tpl
 
 printenv | grep EJABBERD
 

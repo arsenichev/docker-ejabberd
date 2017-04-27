@@ -179,7 +179,7 @@ ldap_uids:
 {%- endif %}
 
 {%- if env['EJABBERD_LDAP_FILTER'] %}
-ldap_filter: "{{ env['EJABBERD_LDAP_FILTER'] }}"
+ldap_filter: {{ env['EJABBERD_LDAP_FILTER'] }}
 {%- endif %}
 
 {%- if env['EJABBERD_LDAP_DN_FILTER'] %}
@@ -275,7 +275,7 @@ access:
     all: allow
   ## Only accounts on the local ejabberd server can create Pubsub nodes:
   pubsub_createnode:
-    local: allow
+    all: allow
   ## In-band registration allows registration of any possible username.
   register:
     {%- if env['EJABBERD_REGISTER_ADMIN_ONLY'] == "true" %}
@@ -310,20 +310,18 @@ modules:
   mod_caps: {}
   mod_carboncopy: {}
   mod_client_state:
-    queue_chat_states: true
+    drop_chat_states: true
     queue_presence: false
   mod_configure: {} # requires mod_adhoc
   mod_disco: {}
   ## mod_echo: {}
   mod_irc: {}
-  mod_bosh:
+  mod_http_bind:
     max_inactivity: 75
   ## mod_http_fileserver:
   ##   docroot: "/var/www"
   ##   accesslog: "/var/log/ejabberd/access.log"
   mod_last: {}
-  mod_mam:
-    default: always
   mod_muc:
     host: "conference.@HOST@"
     access: muc
@@ -357,6 +355,7 @@ modules:
     ## XEP compliant, but increases resource comsumption
     ## ignore_pep_from_offline: false
     last_item_cache: false
+    max_items_node: 500
     plugins:
       - "flat"
       - "hometree"
@@ -395,9 +394,7 @@ modules:
   mod_stats: {}
   mod_time: {}
   mod_vcard: {}
-  {% if env.get('EJABBERD_MOD_VERSION', true) == "true" %}
   mod_version: {}
-  {% endif %}
   mod_http_upload:
     docroot: "/opt/ejabberd/upload"
     {%- if env['EJABBERD_HTTPS'] == "true" %}

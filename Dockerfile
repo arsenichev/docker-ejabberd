@@ -1,13 +1,13 @@
-FROM debian:jessie-slim
+FROM debian:jessie
 MAINTAINER Fernando Ripoll <pipo02mix@gmail.com>
 
-ENV EJABBERD_BRANCH=17.04 \
-    EJABBERD_HOME=/opt/ejabberd \
-    EJABBERD_SKIP_MODULES_UPDATE=true \
+ENV EJABBERD_BRANCH=16.09 \
     EJABBERD_USER=ejabberd \
     EJABBERD_HTTPS=false \
     EJABBERD_STARTTLS=true \
     EJABBERD_S2S_SSL=true \
+    EJABBERD_HOME=/opt/ejabberd \
+    EJABBERD_SKIP_MODULES_UPDATE=true \
     EJABBERD_CONTRIB_MODULES=mod_cobrowser \
     EJABBERD_ADMINS=admin \
     EJABBERD_USERS=admin:password1234 \
@@ -51,7 +51,7 @@ RUN set -x \
         erlang-base erlang-snmp erlang-ssl erlang-ssh erlang-webtool \
         erlang-tools erlang-xmerl erlang-corba erlang-diameter erlang-eldap \
         erlang-eunit erlang-ic erlang-odbc erlang-os-mon \
-        erlang-parsetools erlang-percept erlang-typer erlang-inets \
+        erlang-parsetools erlang-percept erlang-typer \
         python-mysqldb \
         imagemagick \
     ' \
@@ -72,7 +72,6 @@ RUN set -x \
     && chmod +x ./autogen.sh \
     && ./autogen.sh \
     && ./configure --enable-user=$EJABBERD_USER \
-        --prefix=/ \
         --enable-all \
         --disable-tools \
         --disable-pam \
