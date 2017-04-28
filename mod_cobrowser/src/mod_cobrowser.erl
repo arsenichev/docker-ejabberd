@@ -44,10 +44,9 @@ on_user_send_packet(#xmlel{
                     _To) ->
     Type = fxml:get_attr_s(<<"type">>, Attrs),
     if Type == <<"unavailable">> ->
-      Show = fxml:get_attr_s(<<"show">>, Attrs),
       Jid = binary_to_list(jlib:jid_to_string(From)),
       BareJid = string:sub_string(Jid,1,string:str(Jid,"/")-1),
-      send_availability(BareJid, Type, Show);
+      send_availability(BareJid, Type, "");
       true -> Pkt
     end,
     Pkt;
@@ -60,7 +59,7 @@ on_user_send_packet(#xmlel{
     _To) ->
   Type = fxml:get_attr_s(<<"type">>, Attrs),
   if Type == <<"">>; Type == <<"available">> ->
-    Show = fxml:get_attr_s(<<"show">>, Attrs),
+    Show = fxml:get_tag_cdata(fxml:get_subtag(Pkt, <<"show">>)),
     Jid = binary_to_list(jlib:jid_to_string(From)),
     BareJid = string:sub_string(Jid,1,string:str(Jid,"/")-1),
     send_availability(BareJid, Type, Show);
