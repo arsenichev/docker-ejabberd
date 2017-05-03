@@ -310,14 +310,13 @@ modules:
   mod_caps: {}
   mod_carboncopy: {}
   mod_client_state:
-    drop_chat_states: true
     queue_presence: false
   mod_configure: {} # requires mod_adhoc
   mod_disco: {}
   ## mod_echo: {}
   mod_irc: {}
   mod_http_bind:
-    max_inactivity: 75
+    max_inactivity: 30
   ## mod_http_fileserver:
   ##   docroot: "/var/www"
   ##   accesslog: "/var/log/ejabberd/access.log"

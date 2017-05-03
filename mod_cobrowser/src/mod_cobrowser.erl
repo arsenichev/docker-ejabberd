@@ -18,7 +18,7 @@
 
 %% gen_mod API callbacks
 -export([start/2, stop/1, on_user_send_packet/4, on_disconnect/3,
-  send_availability/3, getenv/2, depends/2, mod_opt_type/1]).
+  send_availability/4, getenv/2, depends/2, mod_opt_type/1, extract_show/1]).
 
 start(Host, _Opts) ->
     ?INFO_MSG("mod_cobrowser starting", []),
@@ -46,23 +46,25 @@ on_user_send_packet(#xmlel{
     if Type == <<"unavailable">> ->
       Jid = binary_to_list(jlib:jid_to_string(From)),
       BareJid = string:sub_string(Jid,1,string:str(Jid,"/")-1),
-      send_availability(BareJid, Type, "");
+      Resource = string:sub_string(Jid,string:str(Jid,"/")+1),
+      send_availability(BareJid, "unavailable", "", Resource);
       true -> Pkt
     end,
     Pkt;
 on_user_send_packet(#xmlel{
-  name = <<"presence">>,
-  attrs = Attrs
-} = Pkt,
+      name = <<"presence">>,
+      attrs = Attrs
+    } = Pkt,
     _C2SState,
     From,
     _To) ->
   Type = fxml:get_attr_s(<<"type">>, Attrs),
   if Type == <<"">>; Type == <<"available">> ->
-    Show = fxml:get_tag_cdata(fxml:get_subtag(Pkt, <<"show">>)),
+    Show = lists:flatten(io_lib:format("~p", [extract_show(Pkt)])),
     Jid = binary_to_list(jlib:jid_to_string(From)),
     BareJid = string:sub_string(Jid,1,string:str(Jid,"/")-1),
-    send_availability(BareJid, Type, Show);
+    Resource = string:sub_string(Jid,string:str(Jid,"/")+1),
+    send_availability(BareJid, "available", Show, Resource);
     true -> Pkt
   end,
   Pkt;
@@ -72,18 +74,24 @@ on_user_send_packet(Pkt, _C2SState, _From, _To) ->
 on_disconnect(Sid, Jid, Info) ->
     StrJid = binary_to_list(jlib:jid_to_string(Jid)),
     BareJid = string:sub_string(StrJid,1,string:str(StrJid,"/")-1),
-    ?DEBUG("(mod_cobrowser)onDisconnect: ~p, ~p, ~p", [ Sid, BareJid, Info]),
-    send_availability(BareJid, unavailable, undefined),
+    Resource = string:sub_string(StrJid,string:str(StrJid,"/")+1),
+    ?DEBUG("(mod_cobrowser)onDisconnect: ~p, ~p, ~p, ~p", [ Sid, BareJid, Info, Resource]),
+    send_availability(BareJid, "unavailable", "", Resource),
 
     ok.
 
-send_availability(Jid, Type, Show) ->
+extract_show(Pkt) ->
+  El = fxml:get_subtag(Pkt, <<"show">>),
+  case El of
+    #xmlel{name = <<"show">>} -> fxml:get_tag_cdata(El);
+    _ -> ""
+  end.
+
+send_availability(Jid, Type, Show, Resource) ->
       APIHost = getenv("NGINX_INTERNAL_SERVICE_HOST", "nginx-internal.default.svc.cluster.local"),
       APIEndpoint = "http://" ++ APIHost ++ "/api/app.php/internal/availability/user-presence.json?token=somesecret",
-      ShowString = lists:flatten(io_lib:format("~p", [ Show])),
-      TypeString = lists:flatten(io_lib:format("~p", [ Type])),
-      ?DEBUG("sending packet: ~p type: ~p show: ~p api: ~p", [ Jid, Type, Show, APIEndpoint]),
-      URL = APIEndpoint ++ "&jid=" ++ Jid ++ "&type=" ++ TypeString ++ "&show=" ++ ShowString,
+      ?DEBUG("sending packet: ~p type: ~p show: ~p resource: ~p api: ~p", [ Jid, Type, Show, Resource, APIEndpoint]),
+      URL = APIEndpoint ++ "&jid=" ++ Jid ++ "&type=" ++ Type ++ "&show=" ++ Show ++ "&resource=" ++ Resource,
       R = httpc:request(post, {
           URL,
           [],
