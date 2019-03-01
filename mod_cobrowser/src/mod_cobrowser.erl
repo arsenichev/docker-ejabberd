@@ -7,7 +7,6 @@
 %%%----------------------------------------------------------------------
 
 -module(mod_cobrowser).
--author('fernando@cobrowser.net').
 
 -behaviour(gen_mod).
 
@@ -28,7 +27,7 @@ start(Host, _Opts) ->
 
 stop(Host) ->
     ?INFO_MSG("mod_cobrowser stopping", []),
-    
+
     ejabberd_hooks:delete(user_send_packet, Host, ?MODULE, on_user_send_packet, 50),
     ejabberd_hooks:delete(sm_remove_connection_hook, Host, ?MODULE, on_disconnect, 50),
     ok.
@@ -39,37 +38,44 @@ on_user_send_packet({#presence{
                         show = Show,
                         type = unavailable = Type} = Pkt, State} ) ->
 
-      Jid = binary_to_list(jlib:jid_to_string(From)),
-      BareJid = string:sub_string(Jid,1,string:str(Jid,"/")-1),
-      send_availability(BareJid, Type, Show),
+      %Jid = binary_to_list(jlib:jid_to_string(From)),
+      %BareJid = string:sub_string(Jid,1,string:str(Jid,"/")-1),
+      send_availability(From, Type, Show),
     {Pkt, State};
 on_user_send_packet({#presence{
                         from = From,
                         show = Show,
                         type = available = Type} = Pkt, State} ) ->
 
-      Jid = binary_to_list(jlib:jid_to_string(From)),
-      BareJid = string:sub_string(Jid,1,string:str(Jid,"/")-1),
-      send_availability(BareJid, Type, Show),
+      %Jid = binary_to_list(jlib:jid_to_string(From)),
+      %BareJid = string:sub_string(Jid,1,string:str(Jid,"/")-1),
+      send_availability(From, Type, Show),
     {Pkt, State};
 on_user_send_packet(Acc) ->
     Acc.
 
 on_disconnect(Sid, Jid, Info ) ->
-    StrJid = binary_to_list(jlib:jid_to_string(Jid)),
-    BareJid = string:sub_string(StrJid,1,string:str(StrJid,"/")-1),
-    ?DEBUG("(mod_cobrowser)onDisconnect: ~p, ~p, ~p", [ Sid, BareJid, Info]),
-    send_availability(BareJid, unavailable, undefined),
+    %StrJid = binary_to_list(jlib:jid_to_string(Jid)),
+    %BareJid = string:sub_string(StrJid,1,string:str(StrJid,"/")-1),
+    ?INFO_MSG("(mod_cobrowser onDisconnect", []),
+    ?DEBUG("(mod_cobrowser)onDisconnect: ~p, ~p, ~p", [ Sid, Jid, Info]),
+    send_availability(Jid, unavailable, undefined),
 
     ok.
 
 send_availability(Jid, Type, Show) ->
-      APIHost = getenv("NGINX_INTERNAL_SERVICE_HOST", "nginx-internal.default.svc.cluster.local"),
-      APIEndpoint = "http://" ++ APIHost ++ "/api/app.php/internal/availability/user-presence.json&token=secrettoken",
+      %APIHost = getenv("NGINX_INTERNAL_SERVICE_HOST", "requestbin.jumio.com/1hc8pog1"),
+      APIEndpoint = "https://api.cloudim.ru/realtime_status.php",
+
+      JidString = lists:flatten(io_lib:format("~p", [ Jid#jid.luser])),
+      HostString = lists:flatten(io_lib:format("~p", [Jid#jid.lserver])),
+      ResourceString = lists:flatten(io_lib:format("~p", [Jid#jid.lresource])),
       ShowString = lists:flatten(io_lib:format("~p", [ Show])),
       TypeString = lists:flatten(io_lib:format("~p", [ Type])),
+      ResultString = JidString ++ "@" ++ HostString,
+
       ?DEBUG("sending packet: ~p type: ~p show: ~p api: ~p", [ Jid, Type, Show, APIEndpoint]),
-      URL = "jid=" ++ Jid ++ "&type=" ++ TypeString ++ "&show=" ++ ShowString,
+      URL = "jid=" ++ JidString ++ "&type=" ++ TypeString ++ "&show=" ++ ShowString ++ "&host=" ++ HostString ++ "&result=" ++ ResultString ++ "&resource=" ++ ResourceString,
       R = httpc:request(post, {
           APIEndpoint,
           [],
