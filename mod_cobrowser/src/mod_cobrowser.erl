@@ -64,8 +64,7 @@ on_disconnect(Sid, Jid, Info ) ->
     ok.
 
 send_availability(Jid, Type, Show) ->
-      %APIHost = getenv("NGINX_INTERNAL_SERVICE_HOST", "requestbin.jumio.com/1hc8pog1"),
-      APIEndpoint = "https://api.cloudim.ru/realtime_status.php",
+      APIEndpoint = getenv("NGINX_INTERNAL_SERVICE_HOST", "http://localhost/status"),
 
       JidString = lists:flatten(io_lib:format("~p", [ Jid#jid.luser])),
       HostString = lists:flatten(io_lib:format("~p", [Jid#jid.lserver])),
