@@ -64,7 +64,7 @@ on_disconnect(Sid, Jid, Info ) ->
     ok.
 
 send_availability(Jid, Type, Show) ->
-      APIEndpoint = getenv("NGINX_INTERNAL_SERVICE_HOST", "http://localhost/status"),
+      APIEndpoint = gen_mod:get_module_opt(Jid#jid.lserver, ?MODULE, post_url, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
 
       JidString = lists:flatten(io_lib:format("~p", [ Jid#jid.luser])),
       HostString = lists:flatten(io_lib:format("~p", [Jid#jid.lserver])),
@@ -76,7 +76,7 @@ send_availability(Jid, Type, Show) ->
       ?DEBUG("sending packet: ~p type: ~p show: ~p api: ~p", [ Jid, Type, Show, APIEndpoint]),
       URL = "jid=" ++ JidString ++ "&type=" ++ TypeString ++ "&show=" ++ ShowString ++ "&host=" ++ HostString ++ "&result=" ++ ResultString ++ "&resource=" ++ ResourceString,
       R = httpc:request(post, {
-          APIEndpoint,
+          binary_to_list(APIEndpoint),
           [],
           "application/x-www-form-urlencoded",
           URL}, [], []),
