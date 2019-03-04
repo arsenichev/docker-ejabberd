@@ -15,7 +15,7 @@
 -include("xmpp.hrl").
 
 %% gen_mod API callbacks
--export([start/2, stop/1, on_user_send_packet/1, on_disconnect/3, on_stopping/1, send_availability/3, getenv/2, depends/2]).
+-export([start/2, stop/1, on_user_send_packet/1, on_disconnect/3, on_stopping/0, send_availability/3, getenv/2, depends/2]).
 
 start(Host, _Opts) ->
     ?INFO_MSG("mod_cobrowser starting", []),
@@ -59,8 +59,8 @@ on_disconnect(Sid, Jid, Info ) ->
 
     ok.
 
-on_stopping(Host) ->
-    ?INFO_MSG("mod_cobrowser on_stopping: ~p", [Host]),
+on_stopping() ->
+    ?INFO_MSG("mod_cobrowser on_stopping", []),
 
     ok.
 
