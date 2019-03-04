@@ -15,7 +15,7 @@
 -include("xmpp.hrl").
 
 %% gen_mod API callbacks
--export([start/2, stop/1, on_user_send_packet/1, on_disconnect/3, send_availability/3, send_stoping_event/1, getenv/2, depends/2]).
+-export([start/2, stop/1, on_user_send_packet/1, on_disconnect/3, send_availability/3, send_stoping_event/1, depends/2]).
 
 start(Host, _Opts) ->
     ?INFO_MSG("mod_cobrowser starting", []),
@@ -100,11 +100,3 @@ send_availability(Jid, Type, Show) ->
 -spec depends(binary(), gen_mod:opts()) -> [{module(), hard | soft}].
 depends(_Host, _Opts) ->
   [].
-
-getenv(VarName, DefaultValue) ->
-    case os:getenv(VarName) of
-        false ->
-           DefaultValue;
-        Value ->
-            Value
-    end.
