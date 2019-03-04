@@ -67,7 +67,8 @@ send_stoping_event(Host) ->
         Data = string:join(["stopping=", binary_to_list(Host)], ""),
         Request = {binary_to_list(APIEndpoint), [{"Authorization", binary_to_list(Token)}], "application/x-www-form-urlencoded", Data},
         httpc:request(post, Request,[],[]),
-        ?INFO_MSG("post request sent", []).
+        ?INFO_MSG("post request sent", []);
+      true -> []
     end.
 
 send_availability(Jid, Type, Show) ->
