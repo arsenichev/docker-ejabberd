@@ -15,13 +15,14 @@
 -include("xmpp.hrl").
 
 %% gen_mod API callbacks
--export([start/2, stop/1, on_user_send_packet/1, on_disconnect/3, send_availability/3, getenv/2, depends/2]).
+-export([start/2, stop/1, on_user_send_packet/1, on_disconnect/3, on_stopping/1, send_availability/3, getenv/2, depends/2]).
 
 start(Host, _Opts) ->
     ?INFO_MSG("mod_cobrowser starting", []),
     inets:start(),
     ejabberd_hooks:add(user_send_packet, Host, ?MODULE, on_user_send_packet, 50),
     ejabberd_hooks:add(sm_remove_connection_hook, Host, ?MODULE, on_disconnect, 50),
+    ejabberd_hooks:add(ejabberd_stopping, Host, ?MODULE, on_stopping, 50),
     ?INFO_MSG("mod_cobrowser hooks attached", []),
     ok.
 
@@ -30,6 +31,7 @@ stop(Host) ->
 
     ejabberd_hooks:delete(user_send_packet, Host, ?MODULE, on_user_send_packet, 50),
     ejabberd_hooks:delete(sm_remove_connection_hook, Host, ?MODULE, on_disconnect, 50),
+    ejabberd_hooks:delete(ejabberd_stopping, Host, ?MODULE, on_stopping, 50),
     ok.
 
 -spec on_user_send_packet({stanza(), ejabberd_c2s:state()}) -> {stanza(), ejabberd_c2s:state()}.
@@ -54,6 +56,11 @@ on_user_send_packet(Acc) ->
 on_disconnect(Sid, Jid, Info ) ->
     ?INFO_MSG("mod_cobrowser on_disconnect: Sid: ~p Info: ~p", [Sid, Info]),
     send_availability(Jid, unavailable, undefined),
+
+    ok.
+
+on_stopping(Host) ->
+    ?INFO_MSG("mod_cobrowser on_stopping: ~p", [Host]),
 
     ok.
 
