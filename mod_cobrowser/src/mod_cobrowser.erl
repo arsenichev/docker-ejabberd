@@ -64,6 +64,7 @@ on_disconnect(Sid, Jid, Info ) ->
     ok.
 
 send_availability(Jid, Type, Show) ->
+      Token = gen_mod:get_module_opt(Jid#jid.lserver, ?MODULE, auth_token, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
       APIEndpoint = gen_mod:get_module_opt(Jid#jid.lserver, ?MODULE, post_url, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
 
       ShowString = lists:flatten(io_lib:format("~p", [ Show])),
