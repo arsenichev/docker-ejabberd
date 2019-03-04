@@ -61,11 +61,14 @@ on_disconnect(Sid, Jid, Info ) ->
 send_stoping_event(Host) -> 
     Token = gen_mod:get_module_opt(Host, ?MODULE, auth_token, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
     APIEndpoint = gen_mod:get_module_opt(Host, ?MODULE, post_url, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
-    ?INFO_MSG("Posting send_stoping_event To ~p Token ~p",[APIEndpoint, Token]),
-    Data = string:join(["stopping=", binary_to_list(Host)], ""),
-    Request = {binary_to_list(APIEndpoint), [{"Authorization", binary_to_list(Token)}], "application/x-www-form-urlencoded", Data},
-    httpc:request(post, Request,[],[]),
-    ?INFO_MSG("post request sent", []).
+    if
+      APIEndpoint != "" ->
+        ?INFO_MSG("Posting send_stoping_event To ~p Token ~p",[APIEndpoint, Token]),
+        Data = string:join(["stopping=", binary_to_list(Host)], ""),
+        Request = {binary_to_list(APIEndpoint), [{"Authorization", binary_to_list(Token)}], "application/x-www-form-urlencoded", Data},
+        httpc:request(post, Request,[],[]),
+        ?INFO_MSG("post request sent", []),
+    end.
 
 send_availability(Jid, Type, Show) ->
     Token = gen_mod:get_module_opt(Jid#jid.lserver, ?MODULE, auth_token, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
