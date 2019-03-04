@@ -37,28 +37,22 @@ on_user_send_packet({#presence{
                         from = #jid{lresource = <<"">>} = From,
                         show = Show,
                         type = unavailable = Type} = Pkt, State} ) ->
-
-      %Jid = binary_to_list(jlib:jid_to_string(From)),
-      %BareJid = string:sub_string(Jid,1,string:str(Jid,"/")-1),
+      
+      ?INFO_MSG("mod_cobrowser on_user_send_packet1", []),
       send_availability(From, Type, Show),
     {Pkt, State};
 on_user_send_packet({#presence{
                         from = From,
                         show = Show,
                         type = available = Type} = Pkt, State} ) ->
-
-      %Jid = binary_to_list(jlib:jid_to_string(From)),
-      %BareJid = string:sub_string(Jid,1,string:str(Jid,"/")-1),
+      ?INFO_MSG("mod_cobrowser on_user_send_packet2", []),
       send_availability(From, Type, Show),
     {Pkt, State};
 on_user_send_packet(Acc) ->
     Acc.
 
 on_disconnect(Sid, Jid, Info ) ->
-    %StrJid = binary_to_list(jlib:jid_to_string(Jid)),
-    %BareJid = string:sub_string(StrJid,1,string:str(StrJid,"/")-1),
-    ?INFO_MSG("(mod_cobrowser onDisconnect", []),
-    ?DEBUG("(mod_cobrowser)onDisconnect: ~p, ~p, ~p", [ Sid, Jid, Info]),
+    ?INFO_MSG("mod_cobrowser on_disconnect", []),
     send_availability(Jid, unavailable, undefined),
 
     ok.
@@ -70,7 +64,7 @@ send_availability(Jid, Type, Show) ->
       ShowString = lists:flatten(io_lib:format("~p", [ Show])),
       TypeString = lists:flatten(io_lib:format("~p", [ Type])),
 
-      ?INFO_MSG("sending packet: ~p type: ~p show: ~p api: ~p",[Jid, Type, Show, Token]),
+      ?INFO_MSG("mod_cobrowser send availability Packet: ~p Type: ~p Show: ~p",[Jid, Type, Show]),
 
       Data = string:join(["jid=", binary_to_list(Jid#jid.luser), "&type=", TypeString, "&show=", ShowString, "&host=", binary_to_list(Jid#jid.lserver), "&resource=", binary_to_list(Jid#jid.lresource)], ""),
       R = httpc:request(post, {
