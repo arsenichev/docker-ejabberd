@@ -28,7 +28,7 @@ start(Host, _Opts) ->
 stop(Host) ->
     ?INFO_MSG("mod_cobrowser stopping", []),
     send_stoping_event(Host),
-    
+
     ejabberd_hooks:delete(user_send_packet, Host, ?MODULE, on_user_send_packet, 50),
     ejabberd_hooks:delete(sm_remove_connection_hook, Host, ?MODULE, on_disconnect, 50),
     ?INFO_MSG("mod_cobrowser hooks deattached ~p", [Host]),
@@ -73,9 +73,7 @@ send_stoping_event(Host) ->
             [{"Authorization", binary_to_list(Token)}],
             "application/x-www-form-urlencoded",
             Data}, [], []),
-        {ok, {{"HTTP/1.1", ReturnCode, _}, _, _}} = R,
-        ?DEBUG("API request made with result -> ~p ", [ ReturnCode]),
-        ReturnCode
+        ?DEBUG("API request is made", [])
     end.
 
 send_availability(Jid, Type, Show) ->
