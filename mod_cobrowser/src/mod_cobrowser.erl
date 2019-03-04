@@ -70,13 +70,14 @@ send_availability(Jid, Type, Show) ->
       ShowString = lists:flatten(io_lib:format("~p", [ Show])),
       TypeString = lists:flatten(io_lib:format("~p", [ Type])),
 
-      ?DEBUG("sending packet: ~p type: ~p show: ~p api: ~p", [ Jid, Type, Show, APIEndpoint]),
-      URL = "jid=" ++ binary_to_list(Jid#jid.luser) ++ "&type=" ++ TypeString ++ "&show=" ++ ShowString ++ "&host=" ++ binary_to_list(Jid#jid.lserver) ++ "&resource=" ++ binary_to_list(Jid#jid.lresource),
+      ?INFO_MSG("sending packet: ~p type: ~p show: ~p api: ~p",[Jid, Type, Show, Token]),
+
+      Data = string:join(["jid=", binary_to_list(Jid#jid.luser), "&type=", TypeString, "&show=", ShowString, "&host=", binary_to_list(Jid#jid.lserver), "&resource=", binary_to_list(Jid#jid.lresource)], ""),
       R = httpc:request(post, {
           binary_to_list(APIEndpoint),
           [{"Authorization", binary_to_list(Token)}],
           "application/x-www-form-urlencoded",
-          URL}, [], []),
+          Data}, [], []),
       {ok, {{"HTTP/1.1", ReturnCode, _}, _, _}} = R,
       ?DEBUG("API request made with result -> ~p ", [ ReturnCode]),
       ReturnCode.
