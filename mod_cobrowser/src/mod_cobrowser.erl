@@ -94,9 +94,7 @@ send_availability(Jid, Type, Show) ->
             [{"Authorization", binary_to_list(Token)}],
             "application/x-www-form-urlencoded",
             Data}, [], []),
-        {ok, {{"HTTP/1.1", ReturnCode, _}, _, _}} = R,
-        ?DEBUG("API request made with result -> ~p ", [ ReturnCode]),
-        ReturnCode
+        ?DEBUG("API request is made", [])
     end.
 
 -spec depends(binary(), gen_mod:opts()) -> [{module(), hard | soft}].
