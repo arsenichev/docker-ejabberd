@@ -68,7 +68,7 @@ send_stoping_event(Host) ->
       true -> 
         ?INFO_MSG("mod_cobrowser send stopping Host: ~p",[Host]),
         Data = string:join(["stopping=", binary_to_list(Host)], ""),
-        R = httpc:request(post, {
+        httpc:request(post, {
             binary_to_list(APIEndpoint),
             [{"Authorization", binary_to_list(Token)}],
             "application/x-www-form-urlencoded",
@@ -89,7 +89,7 @@ send_availability(Jid, Type, Show) ->
         ?INFO_MSG("mod_cobrowser send availability Packet: ~p Type: ~p Show: ~p",[Jid, Type, Show]),
 
         Data = string:join(["jid=", binary_to_list(Jid#jid.luser), "&type=", TypeString, "&show=", ShowString, "&host=", binary_to_list(Jid#jid.lserver), "&resource=", binary_to_list(Jid#jid.lresource)], ""),
-        R = httpc:request(post, {
+        httpc:request(post, {
             binary_to_list(APIEndpoint),
             [{"Authorization", binary_to_list(Token)}],
             "application/x-www-form-urlencoded",
