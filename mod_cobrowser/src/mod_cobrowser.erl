@@ -66,15 +66,11 @@ on_disconnect(Sid, Jid, Info ) ->
 send_availability(Jid, Type, Show) ->
       APIEndpoint = gen_mod:get_module_opt(Jid#jid.lserver, ?MODULE, post_url, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
 
-      JidString = lists:flatten(io_lib:format("~p", [ Jid#jid.luser])),
-      HostString = lists:flatten(io_lib:format("~p", [Jid#jid.lserver])),
-      ResourceString = lists:flatten(io_lib:format("~p", [Jid#jid.lresource])),
       ShowString = lists:flatten(io_lib:format("~p", [ Show])),
       TypeString = lists:flatten(io_lib:format("~p", [ Type])),
-      ResultString = JidString ++ "@" ++ HostString,
 
       ?DEBUG("sending packet: ~p type: ~p show: ~p api: ~p", [ Jid, Type, Show, APIEndpoint]),
-      URL = "jid=" ++ binary_to_list(JidString) ++ "&type=" ++ TypeString ++ "&show=" ++ ShowString ++ "&host=" ++ binary_to_list(HostString) ++ "&result=" ++ binary_to_list(ResultString) ++ "&resource=" ++ binary_to_list(ResourceString),
+      URL = "jid=" ++ binary_to_list(Jid#jid.luser) ++ "&type=" ++ TypeString ++ "&show=" ++ ShowString ++ "&host=" ++ binary_to_list(Jid#jid.lserver) ++ "&resource=" ++ binary_to_list(Jid#jid.lresource),
       R = httpc:request(post, {
           binary_to_list(APIEndpoint),
           [],
