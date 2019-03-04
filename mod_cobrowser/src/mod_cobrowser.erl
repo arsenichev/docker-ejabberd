@@ -15,7 +15,7 @@
 -include("xmpp.hrl").
 
 %% gen_mod API callbacks
--export([start/2, stop/1, on_user_send_packet/1, on_disconnect/3, send_availability/3, getenv/2, depends/2]).
+-export([start/2, stop/1, send_stoping_event/1, on_user_send_packet/1, on_disconnect/3, send_availability/3, getenv/2, depends/2]).
 
 start(Host, _Opts) ->
     ?INFO_MSG("mod_cobrowser starting", []),
@@ -29,7 +29,7 @@ stop(Host) ->
     ?INFO_MSG("mod_cobrowser stopping", []),
     ejabberd_hooks:delete(user_send_packet, Host, ?MODULE, on_user_send_packet, 50),
     ejabberd_hooks:delete(sm_remove_connection_hook, Host, ?MODULE, on_disconnect, 50),
-    ?INFO_MSG("mod_cobrowser hooks deattached", []),
+    ?INFO_MSG("mod_cobrowser hooks deattached ~p", [Host]),
     send_stoping_event(Host),
     ok.
 
