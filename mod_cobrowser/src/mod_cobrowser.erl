@@ -15,22 +15,22 @@
 -include("xmpp.hrl").
 
 %% gen_mod API callbacks
--export([start/2, stop/1, on_user_send_packet/1, on_disconnect/3, on_stopping/0, send_availability/3, getenv/2, depends/2]).
+-export([start/2, stop/1, on_user_send_packet/1, on_disconnect/3, send_availability/3, getenv/2, depends/2]).
 
 start(Host, _Opts) ->
     ?INFO_MSG("mod_cobrowser starting", []),
     inets:start(),
     ejabberd_hooks:add(user_send_packet, Host, ?MODULE, on_user_send_packet, 50),
     ejabberd_hooks:add(sm_remove_connection_hook, Host, ?MODULE, on_disconnect, 50),
-    ejabberd_hooks:add(ejabberd_stopping, Host, ?MODULE, on_stopping, 50),
     ?INFO_MSG("mod_cobrowser hooks attached", []),
     ok.
 
 stop(Host) ->
     ?INFO_MSG("mod_cobrowser stopping", []),
-
     ejabberd_hooks:delete(user_send_packet, Host, ?MODULE, on_user_send_packet, 50),
     ejabberd_hooks:delete(sm_remove_connection_hook, Host, ?MODULE, on_disconnect, 50),
+    ?INFO_MSG("mod_cobrowser hooks deattached", []),
+    send_stoping_event(Host),
     ok.
 
 -spec on_user_send_packet({stanza(), ejabberd_c2s:state()}) -> {stanza(), ejabberd_c2s:state()}.
@@ -58,29 +58,33 @@ on_disconnect(Sid, Jid, Info ) ->
 
     ok.
 
-on_stopping() ->
-    ?INFO_MSG("mod_cobrowser on_stopping", []),
-
-    ok.
+send_stoping_event(Host) -> 
+    Token = gen_mod:get_module_opt(Host, ?MODULE, auth_token, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
+    APIEndpoint = gen_mod:get_module_opt(Host, ?MODULE, post_url, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
+    ?INFO_MSG("Posting send_stoping_event To ~p Token ~p",[APIEndpoint, Token]),
+    Data = string:join(["stopping=", binary_to_list(Host)], ""),
+    Request = {binary_to_list(APIEndpoint), [{"Authorization", binary_to_list(Token)}], "application/x-www-form-urlencoded", Data},
+    httpc:request(post, Request,[],[]),
+    ?INFO_MSG("post request sent", []).
 
 send_availability(Jid, Type, Show) ->
-      Token = gen_mod:get_module_opt(Jid#jid.lserver, ?MODULE, auth_token, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
-      APIEndpoint = gen_mod:get_module_opt(Jid#jid.lserver, ?MODULE, post_url, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
+    Token = gen_mod:get_module_opt(Jid#jid.lserver, ?MODULE, auth_token, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
+    APIEndpoint = gen_mod:get_module_opt(Jid#jid.lserver, ?MODULE, post_url, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
 
-      ShowString = lists:flatten(io_lib:format("~p", [ Show])),
-      TypeString = lists:flatten(io_lib:format("~p", [ Type])),
+    ShowString = lists:flatten(io_lib:format("~p", [ Show])),
+    TypeString = lists:flatten(io_lib:format("~p", [ Type])),
 
-      ?INFO_MSG("mod_cobrowser send availability Packet: ~p Type: ~p Show: ~p",[Jid, Type, Show]),
+    ?INFO_MSG("mod_cobrowser send availability Packet: ~p Type: ~p Show: ~p",[Jid, Type, Show]),
 
-      Data = string:join(["jid=", binary_to_list(Jid#jid.luser), "&type=", TypeString, "&show=", ShowString, "&host=", binary_to_list(Jid#jid.lserver), "&resource=", binary_to_list(Jid#jid.lresource)], ""),
-      R = httpc:request(post, {
-          binary_to_list(APIEndpoint),
-          [{"Authorization", binary_to_list(Token)}],
-          "application/x-www-form-urlencoded",
-          Data}, [], []),
-      {ok, {{"HTTP/1.1", ReturnCode, _}, _, _}} = R,
-      ?DEBUG("API request made with result -> ~p ", [ ReturnCode]),
-      ReturnCode.
+    Data = string:join(["jid=", binary_to_list(Jid#jid.luser), "&type=", TypeString, "&show=", ShowString, "&host=", binary_to_list(Jid#jid.lserver), "&resource=", binary_to_list(Jid#jid.lresource)], ""),
+    R = httpc:request(post, {
+        binary_to_list(APIEndpoint),
+        [{"Authorization", binary_to_list(Token)}],
+        "application/x-www-form-urlencoded",
+        Data}, [], []),
+    {ok, {{"HTTP/1.1", ReturnCode, _}, _, _}} = R,
+    ?DEBUG("API request made with result -> ~p ", [ ReturnCode]),
+    ReturnCode.
 
 -spec depends(binary(), gen_mod:opts()) -> [{module(), hard | soft}].
 depends(_Host, _Opts) ->
