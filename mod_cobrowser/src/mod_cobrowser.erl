@@ -73,7 +73,7 @@ send_availability(Jid, Type, Show) ->
       URL = "jid=" ++ binary_to_list(Jid#jid.luser) ++ "&type=" ++ TypeString ++ "&show=" ++ ShowString ++ "&host=" ++ binary_to_list(Jid#jid.lserver) ++ "&resource=" ++ binary_to_list(Jid#jid.lresource),
       R = httpc:request(post, {
           binary_to_list(APIEndpoint),
-          [],
+          [{"Authorization", binary_to_list(Token)}],
           "application/x-www-form-urlencoded",
           URL}, [], []),
       {ok, {{"HTTP/1.1", ReturnCode, _}, _, _}} = R,
