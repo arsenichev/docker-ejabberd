@@ -60,7 +60,7 @@ on_disconnect(Sid, Jid, Info ) ->
 
 send_stoping_event(Host) -> 
     Token = gen_mod:get_module_opt(Host, ?MODULE, auth_token, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
-    APIEndpoint = gen_mod:get_module_opt(Host, ?MODULE, post_url, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
+    APIEndpoint = gen_mod:get_module_opt(Host, ?MODULE, post_url, fun(S) -> iolist_to_binary(S) end),
     if
       APIEndpoint ->
         ?INFO_MSG("Posting send_stoping_event To ~p Token ~p",[APIEndpoint, Token]),
