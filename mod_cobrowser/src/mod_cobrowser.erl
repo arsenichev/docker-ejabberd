@@ -52,7 +52,7 @@ on_user_send_packet(Acc) ->
     Acc.
 
 on_disconnect(Sid, Jid, Info ) ->
-    ?INFO_MSG("mod_cobrowser on_disconnect", []),
+    ?INFO_MSG("mod_cobrowser on_disconnect: Sid: ~p Info: ~p", [Sid, Info]),
     send_availability(Jid, unavailable, undefined),
 
     ok.
