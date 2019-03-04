@@ -31,7 +31,6 @@ stop(Host) ->
 
     ejabberd_hooks:delete(user_send_packet, Host, ?MODULE, on_user_send_packet, 50),
     ejabberd_hooks:delete(sm_remove_connection_hook, Host, ?MODULE, on_disconnect, 50),
-    ejabberd_hooks:delete(ejabberd_stopping, Host, ?MODULE, on_stopping, 50),
     ok.
 
 -spec on_user_send_packet({stanza(), ejabberd_c2s:state()}) -> {stanza(), ejabberd_c2s:state()}.
