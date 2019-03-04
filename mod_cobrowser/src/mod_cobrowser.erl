@@ -74,7 +74,7 @@ send_availability(Jid, Type, Show) ->
       ResultString = JidString ++ "@" ++ HostString,
 
       ?DEBUG("sending packet: ~p type: ~p show: ~p api: ~p", [ Jid, Type, Show, APIEndpoint]),
-      URL = "jid=" ++ JidString ++ "&type=" ++ TypeString ++ "&show=" ++ ShowString ++ "&host=" ++ HostString ++ "&result=" ++ ResultString ++ "&resource=" ++ ResourceString,
+      URL = "jid=" ++ binary_to_list(JidString) ++ "&type=" ++ TypeString ++ "&show=" ++ ShowString ++ "&host=" ++ binary_to_list(HostString) ++ "&result=" ++ binary_to_list(ResultString) ++ "&resource=" ++ binary_to_list(ResourceString),
       R = httpc:request(post, {
           binary_to_list(APIEndpoint),
           [],
