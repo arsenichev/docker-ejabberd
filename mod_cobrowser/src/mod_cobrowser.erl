@@ -15,7 +15,7 @@
 -include("xmpp.hrl").
 
 %% gen_mod API callbacks
--export([start/2, stop/1, send_stoping_event/1, on_user_send_packet/1, on_disconnect/3, send_availability/3, getenv/2, depends/2]).
+-export([start/2, stop/1, on_user_send_packet/1, on_disconnect/3, send_availability/3, send_stoping_event/1, getenv/2, depends/2]).
 
 start(Host, _Opts) ->
     ?INFO_MSG("mod_cobrowser starting", []),
@@ -27,10 +27,11 @@ start(Host, _Opts) ->
 
 stop(Host) ->
     ?INFO_MSG("mod_cobrowser stopping", []),
+    send_stoping_event(Host),
+    
     ejabberd_hooks:delete(user_send_packet, Host, ?MODULE, on_user_send_packet, 50),
     ejabberd_hooks:delete(sm_remove_connection_hook, Host, ?MODULE, on_disconnect, 50),
     ?INFO_MSG("mod_cobrowser hooks deattached ~p", [Host]),
-    send_stoping_event(Host),
     ok.
 
 -spec on_user_send_packet({stanza(), ejabberd_c2s:state()}) -> {stanza(), ejabberd_c2s:state()}.
@@ -61,11 +62,11 @@ on_disconnect(Sid, Jid, Info ) ->
 send_stoping_event(Host) -> 
     Token = gen_mod:get_module_opt(Host, ?MODULE, auth_token, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
     APIEndpoint = gen_mod:get_module_opt(Host, ?MODULE, post_url, fun(S) -> iolist_to_binary(S) end, false),
-    ?INFO_MSG("Check APIEndpoint ~p", [APIEndpoint]),
+    
     if APIEndpoint == false ->
-        ?INFO_MSG("APIEndpoint not set", []);
+        ?INFO_MSG("APIEndpoint not set -> ~p", [APIEndpoint]);
       true -> 
-        ?INFO_MSG("Posting send_stoping_event To ~p Token ~p",[APIEndpoint, Token]),
+        ?INFO_MSG("mod_cobrowser send stopping Host: ~p",[Host]),
         Data = string:join(["stopping=", binary_to_list(Host)], ""),
         R = httpc:request(post, {
             binary_to_list(APIEndpoint),
@@ -79,22 +80,26 @@ send_stoping_event(Host) ->
 
 send_availability(Jid, Type, Show) ->
     Token = gen_mod:get_module_opt(Jid#jid.lserver, ?MODULE, auth_token, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
-    APIEndpoint = gen_mod:get_module_opt(Jid#jid.lserver, ?MODULE, post_url, fun(S) -> iolist_to_binary(S) end, list_to_binary("")),
+    APIEndpoint = gen_mod:get_module_opt(Jid#jid.lserver, ?MODULE, post_url, fun(S) -> iolist_to_binary(S) end, false),
 
     ShowString = lists:flatten(io_lib:format("~p", [ Show])),
     TypeString = lists:flatten(io_lib:format("~p", [ Type])),
 
-    ?INFO_MSG("mod_cobrowser send availability Packet: ~p Type: ~p Show: ~p",[Jid, Type, Show]),
+    if APIEndpoint == false ->
+        ?INFO_MSG("APIEndpoint not set -> ~p", [APIEndpoint]);
+      true ->
+        ?INFO_MSG("mod_cobrowser send availability Packet: ~p Type: ~p Show: ~p",[Jid, Type, Show]),
 
-    Data = string:join(["jid=", binary_to_list(Jid#jid.luser), "&type=", TypeString, "&show=", ShowString, "&host=", binary_to_list(Jid#jid.lserver), "&resource=", binary_to_list(Jid#jid.lresource)], ""),
-    R = httpc:request(post, {
-        binary_to_list(APIEndpoint),
-        [{"Authorization", binary_to_list(Token)}],
-        "application/x-www-form-urlencoded",
-        Data}, [], []),
-    {ok, {{"HTTP/1.1", ReturnCode, _}, _, _}} = R,
-    ?DEBUG("API request made with result -> ~p ", [ ReturnCode]),
-    ReturnCode.
+        Data = string:join(["jid=", binary_to_list(Jid#jid.luser), "&type=", TypeString, "&show=", ShowString, "&host=", binary_to_list(Jid#jid.lserver), "&resource=", binary_to_list(Jid#jid.lresource)], ""),
+        R = httpc:request(post, {
+            binary_to_list(APIEndpoint),
+            [{"Authorization", binary_to_list(Token)}],
+            "application/x-www-form-urlencoded",
+            Data}, [], []),
+        {ok, {{"HTTP/1.1", ReturnCode, _}, _, _}} = R,
+        ?DEBUG("API request made with result -> ~p ", [ ReturnCode]),
+        ReturnCode
+    end.
 
 -spec depends(binary(), gen_mod:opts()) -> [{module(), hard | soft}].
 depends(_Host, _Opts) ->
